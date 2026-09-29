@@ -1,0 +1,4 @@
+*
+!redhawk/
+!redhawk/*.py
+!Dockerfile

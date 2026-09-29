@@ -1,0 +1,5 @@
+{
+  "event_id": "invalid-001",
+  "message": "Missing email must be rejected.",
+  "fail_once": false
+}

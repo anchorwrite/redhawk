@@ -1,0 +1,6 @@
+{
+  "event_id": "ambiguous-001",
+  "customer_email": "lee@example.test",
+  "message": "Something seems odd.",
+  "fail_once": false
+}

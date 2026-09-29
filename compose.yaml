@@ -1,0 +1,24 @@
+services:
+  lab:
+    build: .
+    environment:
+      LAB_API_KEY: ${LAB_API_KEY:?Run python3 -m redhawk init first}
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - lab_data:/app/.lab
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - lab
+volumes:
+  lab_data:
+  n8n_data:

@@ -1,0 +1,6 @@
+{
+  "event_id": "urgent-001",
+  "customer_email": "sam@example.test",
+  "message": "Urgent: our checkout is down.",
+  "fail_once": false
+}
