@@ -33,3 +33,7 @@ venv/
 # Editors
 .vscode/
 .idea/
+
+# Local lab state and personal assessment (not part of the public learning kit)
+.lab/
+LEARNING-PLAN.md

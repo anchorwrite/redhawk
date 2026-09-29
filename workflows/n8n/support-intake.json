@@ -1,0 +1,213 @@
+{
+  "name": "Red Hawk - Support intake",
+  "nodes": [
+    {
+      "id": "ingress",
+      "name": "Support request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "redhawk-support-intake",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "redhawk-support",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "normalize",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://lab:8787/normalize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "notes": "Select your Header Auth credential: X-Lab-Key = LAB_API_KEY. Change URL if not using Docker Compose."
+    },
+    {
+      "id": "classify",
+      "name": "Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://lab:8787/classify",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "notes": "Select your Header Auth credential: X-Lab-Key = LAB_API_KEY. Change URL if not using Docker Compose."
+    },
+    {
+      "id": "branch",
+      "name": "Needs review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "review-condition",
+              "leftValue": "={{ $json.needs_review }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "review",
+      "name": "Review ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        -120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://lab:8787/tickets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ...$json, queue: 'review', source: 'n8n' } }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "notes": "Select your Header Auth credential: X-Lab-Key = LAB_API_KEY. Change URL if not using Docker Compose. Starter retries any error up to 3 attempts. Lab 4 asks you to restrict retries to transient failures.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "standard",
+      "name": "Standard ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://lab:8787/tickets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ...$json, queue: 'standard', source: 'n8n' } }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "notes": "Select your Header Auth credential: X-Lab-Key = LAB_API_KEY. Change URL if not using Docker Compose. Starter retries any error up to 3 attempts. Lab 4 asks you to restrict retries to transient failures.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    }
+  ],
+  "connections": {
+    "Support request": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify": {
+      "main": [
+        [
+          {
+            "node": "Needs review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs review?": {
+      "main": [
+        [
+          {
+            "node": "Review ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standard ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

@@ -1,0 +1,6 @@
+{
+  "event_id": "standard-001",
+  "customer_email": "  ALEX@example.test  ",
+  "message": "  Please reset my password.  ",
+  "fail_once": false
+}

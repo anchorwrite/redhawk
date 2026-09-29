@@ -1,0 +1,8 @@
+[project]
+name = "redhawk-lab"
+version = "0.1.0"
+description = "A dependency-free practice API for n8n, Zapier, and Make"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
