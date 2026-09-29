@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import secrets
+import signal
 import sys
 import time
 import uuid
@@ -138,10 +139,18 @@ def main():
         elif args.command == "serve":
             server = make_server(args.host, args.port, args.db, os.environ.get("LAB_API_KEY", ""))
             print(f"Lab API: http://{args.host}:{server.server_port} (Ctrl-C to stop)", flush=True)
+            # Docker sends SIGTERM to PID 1. Handle it explicitly instead of waiting for SIGKILL.
+            def stop_server(_signum, _frame):
+                raise KeyboardInterrupt
+
+            previous_handler = signal.signal(signal.SIGTERM, stop_server)
             try:
                 server.serve_forever()
+            except KeyboardInterrupt:
+                pass
             finally:
                 server.server_close()
+                signal.signal(signal.SIGTERM, previous_handler)
         elif args.command == "sample":
             print(json.dumps({"event_id": args.event_id, **CASES[args.case]["input"]}, indent=2))
         elif args.command == "inspect":

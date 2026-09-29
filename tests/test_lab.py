@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -118,6 +119,32 @@ class LabTests(unittest.TestCase):
             second = subprocess.run(command, cwd=folder, env=env, capture_output=True, timeout=10)
             self.assertEqual(second.returncode, 1)
             self.assertEqual((Path(folder) / ".env").read_bytes(), original)
+
+    def test_cli_server_stops_cleanly_on_sigterm(self):
+        with tempfile.TemporaryDirectory() as folder:
+            log_path = Path(folder) / "server.log"
+            with log_path.open("w") as log:
+                process = subprocess.Popen(
+                    [sys.executable, "-m", "redhawk", "serve", "--port", "0",
+                     "--db", str(Path(folder) / "shutdown.sqlite3")],
+                    cwd=Path(__file__).resolve().parents[1],
+                    env={**os.environ, "LAB_API_KEY": self.key}, stdout=log, stderr=log,
+                )
+                try:
+                    deadline = time.monotonic() + 5
+                    while "Lab API:" not in log_path.read_text() and time.monotonic() < deadline:
+                        if process.poll() is not None:
+                            break
+                        time.sleep(0.05)
+                    self.assertIn("Lab API:", log_path.read_text())
+                    # Allow signal handler registration immediately after the readiness log.
+                    time.sleep(0.1)
+                    process.terminate()
+                    self.assertEqual(process.wait(timeout=5), 0, log_path.read_text())
+                finally:
+                    if process.poll() is None:
+                        process.kill()
+                        process.wait(timeout=5)
 
     def test_sample_files_match_checker_inputs(self):
         root = Path(__file__).resolve().parents[1]
