@@ -55,7 +55,17 @@ Open [local n8n](http://localhost:5678), create its local owner account, and fol
 docker compose down
 ```
 
-This preserves named volumes. The Compose API database and the native Python database are separate. Keep one running mode throughout an exercise. The n8n `latest` image tag follows upstream's stable releases; record your actual n8n version with your exercise results. See the [official Docker guide](https://github.com/n8n-io/n8n/blob/master/docker/images/n8n/README.md) for pinning a specific version. `N8N_SECURE_COOKIE=false` is for this localhost-only HTTP editor.
+This preserves named volumes. The Compose API database and the native Python database are separate. Keep one running mode throughout an exercise. n8n is pinned to **2.41.3**, the version used for the live workflow checks, so routine starts do not follow a moving image tag. Review the [official Docker guide](https://github.com/n8n-io/n8n/blob/master/docker/images/n8n/README.md) when updating. `N8N_SECURE_COOKIE=false` is for this localhost-only HTTP editor.
+
+### Limited disk or memory
+
+The supplied stack caps n8n at **1 GiB RAM / 1 CPU** and the Python API at **128 MiB / half a CPU**. The Node.js heap is capped at 512 MiB within n8n's container limit. These are ceilings, not measured usage; Docker Desktop's VM uses additional memory. Production workflows run one at a time. This is sized for the tiny JSON lessons, not large files, local models, or heavy Code nodes.
+
+Container logs rotate at two 2 MiB files per service. n8n prunes finished execution history older than 72 hours or beyond roughly 250 executions; pruning runs periodically, so these are retention targets rather than strict disk quotas. Workflows and credentials are preserved. Export exercise evidence before old execution traces expire.
+
+Start only for a learning session, then run `docker compose stop`. Resume with `docker compose start`; neither command deletes your workflows. Docker Desktop's [Resource Saver](https://docs.docker.com/desktop/use-desktop/resource-saver/) can stop the VM after all containers are stopped. In Docker Desktop **Settings → Resources**, a 3 GiB VM ceiling is a reasonable starting point when this is your only stack; raise it if workloads need more. Container caps do not change that global setting.
+
+Inspect usage with `docker stats --no-stream` and `docker system df`. Image downloads, extracted layers, and build cache consume disk in addition to the small data volumes. Avoid broad pruning commands or `docker compose down -v`: those can delete data you intended to keep. The Python-only demo remains available without starting Docker.
 
 ## Connect hosted platforms
 
@@ -87,6 +97,6 @@ python3 -m redhawk --help
 node --test tests/zapier-json.test.cjs
 ```
 
-Tests exercise real HTTP requests, authentication, field validation, routing checks, persistence, temporary failures, concurrent duplicate deliveries, and conflict detection. The n8n JSON also has structural checks. Live platform acceptance is a separate step: importing or configuring the workflow and passing its six checks. No account-level Zapier/Make execution is implied by a passing Python test suite.
+Tests exercise real HTTP requests, authentication, field validation, routing checks, persistence, temporary failures, concurrent duplicate deliveries, and conflict detection. The n8n JSON also has structural checks. On September 29, 2026, all six cases additionally passed through the imported n8n 2.41.3 workflow in the resource-capped Compose stack, including the 503→201 retry and 201→200 duplicate path. Hosted Zapier/Make acceptance still requires configuring each account's workflow and passing its six checks; the local tests do not imply hosted execution.
 
 Personal learning notes, API keys, webhook URLs, and local databases are excluded from the public repository.

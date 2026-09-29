@@ -2,6 +2,8 @@
 
 Goal: understand nodes, expressions, credentials, branching, test versus production webhooks, and retries. First complete the [local demo](../README.md#start-here--five-minute-local-demo).
 
+Validated September 29, 2026: the starter imported into n8n 2.41.3 and passed all six cases through its live production webhook under the supplied 1 GiB container cap. Credentials were attached locally; the public JSON still contains none. Your own import requires the connection steps below.
+
 ## 1. Import and connect
 
 1. Start the optional Docker Compose stack, or use your existing n8n installation.
